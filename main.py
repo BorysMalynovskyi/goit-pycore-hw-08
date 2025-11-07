@@ -1,4 +1,5 @@
 import re
+import pickle
 from collections import UserDict
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -161,6 +162,19 @@ class AddressBook(UserDict):
             del self.data[name]
         else:
             raise KeyError(f"Record with name '{name}' not found.")
+
+
+def save_data(book: AddressBook, filename: str = "addressbook.pkl") -> None:
+    with open(filename, "wb") as file:
+        pickle.dump(book, file)
+
+
+def load_data(filename: str = "addressbook.pkl") -> AddressBook:
+    try:
+        with open(filename, "rb") as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        return AddressBook()
 
 
 def get_upcoming_birthdays(users: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -349,41 +363,46 @@ def show_commands(args: List[str], _: AddressBook) -> str:
 
 
 def main() -> None:
-    book: AddressBook = AddressBook()
+    book: AddressBook = load_data()
     print("Welcome to the assistant bot!")
-    while True:
-        user_input: str = input("Enter a command: ")
-        if not user_input.strip():
-            print(f"Please enter a command. Example: {COMMAND_TEMPLATES[Command.ADD]}")
-            continue
-        command, args, raw_command = parse_input(user_input)
+    try:
+        while True:
+            user_input: str = input("Enter a command: ")
+            if not user_input.strip():
+                print(f"Please enter a command. Example: {COMMAND_TEMPLATES[Command.ADD]}")
+                continue
+            command, args, raw_command = parse_input(user_input)
 
-        if command in {Command.CLOSE, Command.EXIT}:
-            print("Good bye!")
-            break
+            if command in {Command.CLOSE, Command.EXIT}:
+                print("Good bye!")
+                break
 
-        if command == Command.HELLO:
-            print("How can I help you?")
-        elif command == Command.ADD:
-            print(add_contact(args, book))
-        elif command == Command.CHANGE:
-            print(change_phone(args, book))
-        elif command == Command.PHONE:
-            print(show_phone(args, book))
-        elif command == Command.ALL:
-            print(show_all(args, book))
-        elif command == Command.ADD_BIRTHDAY:
-            print(add_birthday(args, book))
-        elif command == Command.SHOW_BIRTHDAY:
-            print(show_birthday(args, book))
-        elif command == Command.BIRTHDAYS:
-            print(birthdays(args, book))
-        elif command == Command.HELP:
-            print(show_commands(args, book))
-        elif command is None:
-            print(format_unknown_command_message(raw_command))
-        else:
-            print("Unexpected command handling error.")
+            if command == Command.HELLO:
+                print("How can I help you?")
+            elif command == Command.ADD:
+                print(add_contact(args, book))
+            elif command == Command.CHANGE:
+                print(change_phone(args, book))
+            elif command == Command.PHONE:
+                print(show_phone(args, book))
+            elif command == Command.ALL:
+                print(show_all(args, book))
+            elif command == Command.ADD_BIRTHDAY:
+                print(add_birthday(args, book))
+            elif command == Command.SHOW_BIRTHDAY:
+                print(show_birthday(args, book))
+            elif command == Command.BIRTHDAYS:
+                print(birthdays(args, book))
+            elif command == Command.HELP:
+                print(show_commands(args, book))
+            elif command is None:
+                print(format_unknown_command_message(raw_command))
+            else:
+                print("Unexpected command handling error.")
+    except KeyboardInterrupt:
+        print("\nGood bye!")
+    finally:
+        save_data(book)
 
 
 if __name__ == "__main__":
